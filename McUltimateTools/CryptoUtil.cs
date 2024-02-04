@@ -20,7 +20,6 @@ public static class CryptoUtil
     {
         var passwordBytes = Encoding.UTF8.GetBytes(password);
         var saltBytes = Encoding.UTF8.GetBytes(salt);
-        // make an argon2id hash of the password and salt
         var argon2 = new Argon2id(passwordBytes)
         {
             Salt = saltBytes,
