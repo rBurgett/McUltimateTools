@@ -73,6 +73,26 @@ app.MapPost("/login", async (HttpContext context, ServiceController serviceContr
         await HttpError.Send500(context);
     }
 });
+app.MapPost("/logout", async (HttpContext context, ServiceController serviceController) =>
+{
+    try
+    {
+        var ( user, sessionToken ) = await Util.GetUserFromToken(serviceController.db, context);
+        if (user == null || sessionToken == null)
+        {
+            await HttpError.Send401(context);
+            return;
+        }
+
+        await db.DeleteSessionToken(sessionToken.Token);
+        context.Response.StatusCode = 200;
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.Message);
+        await HttpError.Send500(context);
+    }
+});
 app.MapPost("/users", async (HttpContext context, ServiceController serviceController) =>
 {
     try
@@ -141,7 +161,7 @@ app.MapGet("/users/{id}", async (HttpContext context, ServiceController serviceC
             await HttpError.Send400(context);
             return;
         }
-        var user = await Util.GetUserFromToken(serviceController.db, context);
+        var ( user, _ ) = await Util.GetUserFromToken(serviceController.db, context);
         if (user == null || user.Id != id)
         {
             await HttpError.Send401(context);
@@ -167,7 +187,7 @@ app.MapDelete("/users/{id}", async (HttpContext context, ServiceController servi
             await HttpError.Send404(context);
             return;
         }
-        var user = await Util.GetUserFromToken(serviceController.db, context);
+        var ( user, _ ) = await Util.GetUserFromToken(serviceController.db, context);
         if (user == null || user.Id != id)
         {
             await HttpError.Send401(context);

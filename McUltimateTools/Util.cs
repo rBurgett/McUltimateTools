@@ -26,25 +26,25 @@ public class Util
         return date;
     }
 
-    public static async Task<User?> GetUserFromToken(Db db, HttpContext context)
+    public static async Task<(User?, SessionToken?)> GetUserFromToken(Db db, HttpContext context)
     {
         var token = context.Request.Headers[Constants.SessionTokenHeader];
         if (token.Count == 0)
         {
-            return null;
+            return (null, null);
         }
         var sessionToken = await db.GetSessionToken(token.ToString());
         if (sessionToken == null)
         {
-            return null;
+            return (null, null);
         }
         var expirationDate = FromIsoDateString(sessionToken.Expiration);
         if (expirationDate < DateTime.UtcNow)
         {
-            return null;
+            return (null, null);
         }
         var user = await db.GetUser(sessionToken.User);
-        return user;
+        return (user, sessionToken);
     }
 
 }
