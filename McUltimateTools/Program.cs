@@ -8,7 +8,19 @@ var builder = WebApplication.CreateBuilder(args);
 var db = new Db(varCheckRes.UsersTableName);
 
 builder.Services.AddSingleton<ServiceController>(provider => new ServiceController(db));
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policyBuilder =>
+    {
+        policyBuilder
+            .AllowAnyOrigin()
+            .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+app.UseCors();
 
 app.MapGet("/", async (context) =>
 {
