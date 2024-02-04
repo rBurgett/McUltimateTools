@@ -9,7 +9,7 @@ public class Argon2Config
     // Equivalent to Bitwarden's default configuration
     // https://bitwarden.com/help/kdf-algorithms/#argon2id
     public int Iterations = 3;
-    public int MemorySize = 6 * 1024;
+    public int MemorySize = 64 * 1024;
     public int Parallelism = 4;
     public int ByteLength = 32;
 }
