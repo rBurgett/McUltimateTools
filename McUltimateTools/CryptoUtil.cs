@@ -1,5 +1,6 @@
 using System.Text;
 using Konscious.Security.Cryptography;
+using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 
 namespace McUltimateTools;
 
@@ -28,6 +29,13 @@ public static class CryptoUtil
             Iterations = config.Iterations,
         };
         var hash = argon2.GetBytes(config.ByteLength);
-        return Convert.ToHexString(hash);
+        return Convert.ToHexString(hash).ToLower();
+    }
+    public static string GenerateSalt(int byteLength)
+    {
+        var saltBytes = new byte[byteLength];
+        var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(saltBytes);
+        return Convert.ToHexString(saltBytes).ToLower();
     }
 }

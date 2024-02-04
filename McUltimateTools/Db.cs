@@ -1,42 +1,38 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
-using Microsoft.AspNetCore.Connections;
 
 namespace McUltimateTools;
 
 public class Db
 {
-    private string usersTableName;
-    private AmazonDynamoDBClient client;
+    private readonly string _usersTableName;
+    private readonly AmazonDynamoDBClient _client;
 
     public Db(string usersTableName)
     {
-        this.usersTableName = usersTableName;
-        client = new AmazonDynamoDBClient();
+        this._usersTableName = usersTableName;
+        _client = new AmazonDynamoDBClient();
     }
 
     public async Task<User> AddUser(User user)
     {
-        // if id is empty
-        if (user.Id == "")
-        {
-            throw new Exception("user.Id is empty");
-        }
         var now = Util.GetDateString();
         user.CreatedAt = now;
         user.UpdatedAt = now;
         var request = new PutItemRequest
         {
-            TableName = usersTableName,
+            TableName = _usersTableName,
             Item = new Dictionary<string, AttributeValue>
             {
                 {"Id", new AttributeValue {S = user.Id}},
                 {"Email", new AttributeValue {S = user.Email}},
+                {"PasswordHash", new AttributeValue {S = user.PasswordHash}},
+                {"PasswordSalt", new AttributeValue {S = user.PasswordSalt}},
                 {"CreatedAt", new AttributeValue {S = user.CreatedAt}},
                 {"UpdatedAt", new AttributeValue {S = user.UpdatedAt}},
             }
         };
-        await client.PutItemAsync(request);
+        await _client.PutItemAsync(request);
         return user;
     }
 
@@ -44,13 +40,13 @@ public class Db
     {
         var request = new DeleteItemRequest
         {
-            TableName = usersTableName,
+            TableName = _usersTableName,
             Key = new Dictionary<string, AttributeValue>
             {
                 {"Id", new AttributeValue {S = id}},
             }
         };
-        await client.DeleteItemAsync(request);
+        await _client.DeleteItemAsync(request);
         return id;
     }
 
@@ -58,16 +54,18 @@ public class Db
     {
         var request = new ScanRequest
         {
-            TableName = usersTableName,
+            TableName = _usersTableName,
         };
-        var response = await client.ScanAsync(request);
+        var response = await _client.ScanAsync(request);
         var users = response.Items.Select(item =>
         {
             var id = item["Id"].S;
             var email = item["Email"].S;
+            var passwordHash = item["PasswordHash"].S;
+            var passwordSalt = item["PasswordSalt"].S;
             var createdAt = item["CreatedAt"].S;
             var updatedAt = item["UpdatedAt"].S;
-            return new User(id, email, createdAt, updatedAt);
+            return new User(id, email, passwordHash, passwordSalt, createdAt, updatedAt);
         }).ToArray();
         return users;
     }
@@ -76,22 +74,24 @@ public class Db
     {
         var request = new GetItemRequest
         {
-            TableName = usersTableName,
+            TableName = _usersTableName,
             Key = new Dictionary<string, AttributeValue>
             {
                 {"Id", new AttributeValue {S = id}},
             }
         };
-        var response = await client.GetItemAsync(request);
+        var response = await _client.GetItemAsync(request);
         if (response.Item.Count == 0)
         {
             return null;
         }
         var item = response.Item;
         var email = item["Email"].S;
+        var passwordHash = item["PasswordHash"].S;
+        var passwordSalt = item["PasswordSalt"].S;
         var createdAt = item["CreatedAt"].S;
         var updatedAt = item["UpdatedAt"].S;
-        return new User(id, email, createdAt, updatedAt);
+        return new User(id, email, passwordHash, passwordSalt, createdAt, updatedAt);
     }
 
 }
