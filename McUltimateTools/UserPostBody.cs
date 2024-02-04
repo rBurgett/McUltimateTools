@@ -1,0 +1,9 @@
+using System.Text.Json.Serialization;
+
+namespace McUltimateTools;
+
+public class UserPostBody
+{
+    [JsonPropertyName("email")]
+    public string? Email { get; set; }
+}
