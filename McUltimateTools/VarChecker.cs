@@ -5,6 +5,7 @@ namespace McUltimateTools;
 public class VarCheckResponse
 {
     public string UsersTableName = "";
+    public string SessionTokensTableName = "";
 }
 
 public static class VarChecker
@@ -38,10 +39,16 @@ public static class VarChecker
         {
             throw new Exception("USERS_TABLE_NAME environment variable is not set");
         }
+        var sessionTokensTableName = Environment.GetEnvironmentVariable("SESSION_TOKENS_TABLE_NAME");
+        if (sessionTokensTableName == null)
+        {
+            throw new Exception("SESSION_TOKENS_TABLE_NAME environment variable is not set");
+        }
 
         return new VarCheckResponse
         {
-            UsersTableName = usersTableName
+            UsersTableName = usersTableName,
+            SessionTokensTableName = sessionTokensTableName
         };
     }
 }

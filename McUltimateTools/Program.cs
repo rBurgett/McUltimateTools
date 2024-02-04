@@ -5,7 +5,7 @@ var varCheckRes = VarChecker.Check();
 
 var builder = WebApplication.CreateBuilder(args);
 
-var db = new Db(varCheckRes.UsersTableName);
+var db = new Db(varCheckRes.UsersTableName, varCheckRes.SessionTokensTableName);
 
 builder.Services.AddSingleton<ServiceController>(provider => new ServiceController(db));
 
@@ -22,9 +22,56 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 app.UseCors();
 
-app.MapGet("/", async (context) =>
+app.MapGet("/", async (HttpContext context, ServiceController serviceController) =>
 {
     await context.Response.WriteAsync("Isaac Fain's Minecraft Ultimate Tools API");
+});
+app.MapPost("/login", async (HttpContext context, ServiceController serviceController) =>
+{
+    try
+    {
+        LoginPostBody? loginRes;
+        try
+        {
+            loginRes = await JsonSerializer.DeserializeAsync<LoginPostBody>(context.Request.Body);
+        }
+        catch (Exception)
+        {
+            await HttpError.Send400(context);
+            return;
+        }
+        if (loginRes == null || loginRes.Email == null || loginRes.Password == null)
+        {
+            await HttpError.Send400(context);
+            return;
+        }
+        var user = await serviceController.db.FindUserByEmail(loginRes.Email);
+        if (user == null)
+        {
+            await HttpError.Send401(context);
+            return;
+        }
+        var config = new Argon2Config();
+        var passwordHash = CryptoUtil.Argon2Hash(loginRes.Password, user.PasswordSalt, config);
+        if (passwordHash != user.PasswordHash)
+        {
+            await HttpError.Send401(context);
+            return;
+        }
+        var token = Util.GenerateUuid();
+        var thirtyDaysFromNow = DateTime.UtcNow.AddDays(Constants.SessionTokenExpirationDays);
+        var expiration = Util.ToIsoDateString(thirtyDaysFromNow);
+        var sessionToken = new SessionToken(token, user.Id, expiration);
+        await serviceController.db.AddSessionToken(sessionToken);
+        var json = JsonSerializer.Serialize(sessionToken);
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(json);
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.Message);
+        await HttpError.Send500(context);
+    }
 });
 app.MapPost("/users", async (HttpContext context, ServiceController serviceController) =>
 {
@@ -37,20 +84,17 @@ app.MapPost("/users", async (HttpContext context, ServiceController serviceContr
         }
         catch (Exception)
         {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("Invalid request body");
+            await HttpError.Send400(context);
             return;
         }
         if (userRes == null || userRes.Email == null || !User.ValidateEmail(userRes.Email))
         {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("Invalid request body");
+            await HttpError.Send400(context);
             return;
         }
         if (userRes.Password == null || !User.ValidatePassword(userRes.Password))
         {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync($"Invalid password. Must be a minimum of {Constants.PasswordMinLength} characters and maximum of {Constants.PasswordMaxLength} characters long.");
+            await HttpError.Send400(context);
             return;
         }
         var config = new Argon2Config();
@@ -65,8 +109,7 @@ app.MapPost("/users", async (HttpContext context, ServiceController serviceContr
     catch (Exception e)
     {
         Console.WriteLine(e.Message);
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync(e.Message);
+        await HttpError.Send500(context);
     }
 });
 app.MapGet("/users", async (HttpContext context, ServiceController serviceController) =>
@@ -85,8 +128,7 @@ app.MapGet("/users", async (HttpContext context, ServiceController serviceContro
     catch (Exception e)
     {
         Console.WriteLine(e.Message);
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync(e.Message);
+        await HttpError.Send500(context);
     }
 });
 app.MapGet("/users/{id}", async (HttpContext context, ServiceController serviceController) =>
@@ -96,15 +138,13 @@ app.MapGet("/users/{id}", async (HttpContext context, ServiceController serviceC
         var id = context.Request.RouteValues["id"]?.ToString();
         if (id == null)
         {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("Invalid id");
+            await HttpError.Send400(context);
             return;
         }
         var user = await serviceController.db.GetUser(id);
         if (user == null)
         {
-            context.Response.StatusCode = 404;
-            await context.Response.WriteAsync("Not found");
+            await HttpError.Send404(context);
             return;
         }
         var json = JsonSerializer.Serialize(user);
@@ -114,8 +154,7 @@ app.MapGet("/users/{id}", async (HttpContext context, ServiceController serviceC
     catch (Exception e)
     {
         Console.WriteLine(e.Message);
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync(e.Message);
+        await HttpError.Send500(context);
     }
 });
 app.MapDelete("/users/{id}", async (HttpContext context, ServiceController serviceController) =>
@@ -125,8 +164,7 @@ app.MapDelete("/users/{id}", async (HttpContext context, ServiceController servi
         var id = context.Request.RouteValues["id"]?.ToString();
         if (id == null)
         {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("Invalid id");
+            await HttpError.Send404(context);
             return;
         }
         await serviceController.db.DeleteUser(id);
@@ -135,8 +173,7 @@ app.MapDelete("/users/{id}", async (HttpContext context, ServiceController servi
     catch (Exception e)
     {
         Console.WriteLine(e.Message);
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync(e.Message);
+        await HttpError.Send500(context);
     }
 });
 app.Run();

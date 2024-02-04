@@ -8,9 +8,15 @@ public class Util
             return uuid.ToString();
     }
 
+    public static string ToIsoDateString(DateTime date)
+    {
+        var isoDateString = date.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        return isoDateString;
+    }
+
     public static string GetDateString()
     {
-        var isoDateString = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-        return isoDateString;
+        var date = DateTime.UtcNow;
+        return ToIsoDateString(date);
     }
 }
