@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McUltimateTools", "McUltimateTools\McUltimateTools.csproj", "{93FD2059-6587-4D5B-B9C0-A300DFDCA54D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McUltimateToolsTests", "McUltimateToolsTests\McUltimateToolsTests.csproj", "{1052B5F4-6261-4E1F-80AA-E0DA8D48BEE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{93FD2059-6587-4D5B-B9C0-A300DFDCA54D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93FD2059-6587-4D5B-B9C0-A300DFDCA54D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93FD2059-6587-4D5B-B9C0-A300DFDCA54D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1052B5F4-6261-4E1F-80AA-E0DA8D48BEE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1052B5F4-6261-4E1F-80AA-E0DA8D48BEE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1052B5F4-6261-4E1F-80AA-E0DA8D48BEE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1052B5F4-6261-4E1F-80AA-E0DA8D48BEE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
