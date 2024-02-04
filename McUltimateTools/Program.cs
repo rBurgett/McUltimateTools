@@ -141,10 +141,10 @@ app.MapGet("/users/{id}", async (HttpContext context, ServiceController serviceC
             await HttpError.Send400(context);
             return;
         }
-        var user = await serviceController.db.GetUser(id);
-        if (user == null)
+        var user = await Util.GetUserFromToken(serviceController.db, context);
+        if (user == null || user.Id != id)
         {
-            await HttpError.Send404(context);
+            await HttpError.Send401(context);
             return;
         }
         var json = JsonSerializer.Serialize(user);
@@ -165,6 +165,12 @@ app.MapDelete("/users/{id}", async (HttpContext context, ServiceController servi
         if (id == null)
         {
             await HttpError.Send404(context);
+            return;
+        }
+        var user = await Util.GetUserFromToken(serviceController.db, context);
+        if (user == null || user.Id != id)
+        {
+            await HttpError.Send401(context);
             return;
         }
         await serviceController.db.DeleteUser(id);

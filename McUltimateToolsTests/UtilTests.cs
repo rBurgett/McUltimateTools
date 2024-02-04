@@ -35,4 +35,11 @@ public class UtilTests
         Assert.That(Regex.IsMatch(dateString, DateStringPattern), Is.True);
         Assert.That(dateString, Does.StartWith(DateTime.UtcNow.ToString("yyyy-MM-dd")));
     }
+    [Test]
+    public void Util_FromIsoDateString()
+    {
+        var dateString = "2024-02-04T21:15:59.753Z";
+        var parsedDate = Util.FromIsoDateString(dateString);
+        Assert.That(parsedDate.ToString("yyyy-MM-dd"), Is.EqualTo("2024-02-04"));
+    }
 }

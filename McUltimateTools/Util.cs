@@ -19,4 +19,32 @@ public class Util
         var date = DateTime.UtcNow;
         return ToIsoDateString(date);
     }
+
+    public static DateTime FromIsoDateString(string isoDateString)
+    {
+        var date = DateTime.Parse(isoDateString);
+        return date;
+    }
+
+    public static async Task<User?> GetUserFromToken(Db db, HttpContext context)
+    {
+        var token = context.Request.Headers[Constants.SessionTokenHeader];
+        if (token.Count == 0)
+        {
+            return null;
+        }
+        var sessionToken = await db.GetSessionToken(token.ToString());
+        if (sessionToken == null)
+        {
+            return null;
+        }
+        var expirationDate = FromIsoDateString(sessionToken.Expiration);
+        if (expirationDate < DateTime.UtcNow)
+        {
+            return null;
+        }
+        var user = await db.GetUser(sessionToken.User);
+        return user;
+    }
+
 }
